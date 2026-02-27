@@ -10,6 +10,7 @@ import android.net.VpnService;
 import android.os.Bundle;
 import android.os.RemoteException;
 import android.text.InputType;
+import android.util.Log;
 import android.view.GestureDetector;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -33,6 +34,9 @@ import androidx.annotation.Nullable;
 import androidx.annotation.UiThread;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.SwitchCompat;
+
+import com.google.android.material.switchmaterial.SwitchMaterial;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -76,8 +80,7 @@ public class MainActivity extends AppCompatActivity implements TrojanConnection.
     private Switch allowLanSwitch;
     private Button startStopButton, copyPortBtn;
     private EditText trojanURLText;
-    private @ProxyService.ProxyState
-    int proxyState = ProxyService.STATE_NONE;
+    private @ProxyService.ProxyState int proxyState = ProxyService.STATE_NONE;
     private long currentProxyPort;
     private final TrojanConnection connection = new TrojanConnection(false);
     private final Object lock = new Object();
@@ -88,7 +91,7 @@ public class MainActivity extends AppCompatActivity implements TrojanConnection.
     private ActivityResultLauncher<Intent> exemptAppSettingsActivityResultLauncher;
     private ActivityResultLauncher<Intent> startProxyActivityResultLauncher;
 
-    private TextViewListener remoteServerRemarkTextListener = new TextViewListener() {
+    private final TextViewListener remoteServerRemarkTextListener = new TextViewListener() {
         @Override
         protected void onTextChanged(String before, String old, String aNew, String after) {
             // update TextView
@@ -101,7 +104,7 @@ public class MainActivity extends AppCompatActivity implements TrojanConnection.
         }
     };
 
-    private TextViewListener remoteAddrTextListener = new TextViewListener() {
+    private final TextViewListener remoteAddrTextListener = new TextViewListener() {
         @Override
         protected void onTextChanged(String before, String old, String aNew, String after) {
             // update TextView
@@ -115,7 +118,7 @@ public class MainActivity extends AppCompatActivity implements TrojanConnection.
         }
     };
 
-    private TextViewListener remoteServerSNITextListener = new TextViewListener() {
+    private final TextViewListener remoteServerSNITextListener = new TextViewListener() {
         @Override
         protected void onTextChanged(String before, String old, String aNew, String after) {
             // update TextView
@@ -129,7 +132,7 @@ public class MainActivity extends AppCompatActivity implements TrojanConnection.
         }
     };
 
-    private TextViewListener remotePortTextListener = new TextViewListener() {
+    private final TextViewListener remotePortTextListener = new TextViewListener() {
         @Override
         protected void onTextChanged(String before, String old, String aNew, String after) {
             // update TextView
@@ -142,13 +145,14 @@ public class MainActivity extends AppCompatActivity implements TrojanConnection.
                     ins.setRemotePort(port);
                 } catch (NumberFormatException e) {
                     // Ignore when we get invalid number
-                    e.printStackTrace();
+//                    e.printStackTrace();
+                    Log.i(TAG, "onTextChanged: ", e);
                 }
             }
             endUpdates();
         }
     };
-    private TextViewListener passwordTextListener = new TextViewListener() {
+    private final TextViewListener passwordTextListener = new TextViewListener() {
         @Override
         protected void onTextChanged(String before, String old, String aNew, String after) {
             // update TextView
@@ -174,7 +178,7 @@ public class MainActivity extends AppCompatActivity implements TrojanConnection.
                     }
                 }
             } catch (Exception e) {
-                e.printStackTrace();
+               // e.printStackTrace();
             }
         }
     }
@@ -597,7 +601,8 @@ public class MainActivity extends AppCompatActivity implements TrojanConnection.
                         }
                     });
                 } catch (RemoteException e) {
-                    e.printStackTrace();
+                    // e.printStackTrace();
+                    Log.e(TAG, "onServiceConnected: ", e);
                 }
             }
         });
@@ -621,7 +626,8 @@ public class MainActivity extends AppCompatActivity implements TrojanConnection.
             long port = msgJson.optLong(ProxyService.STATE_MSG_KEY_PORT, INVALID_PORT);
             updatePortInfo(port);
         } catch (JSONException e) {
-            e.printStackTrace();
+            // e.printStackTrace();
+            Log.i(TAG, "onStateChanged: ", e);
         }
     }
 
@@ -674,7 +680,8 @@ public class MainActivity extends AppCompatActivity implements TrojanConnection.
                 service.testConnection(CONNECTION_TEST_URL);
             } catch (RemoteException e) {
                 showTestConnectionResult(CONNECTION_TEST_URL, false, 0L, getString(R.string.trojan_service_error));
-                e.printStackTrace();
+                // e.printStackTrace();
+                Log.i(TAG, "testConnection: ", e);
             }
         }
     }
@@ -692,7 +699,8 @@ public class MainActivity extends AppCompatActivity implements TrojanConnection.
             try {
                 service.showDevelopInfoInLogcat();
             } catch (RemoteException e) {
-                e.printStackTrace();
+                // e.printStackTrace();
+                Log.i(TAG, "showDevelopInfoInLogcat: ", e);
             }
         }
     }
@@ -726,53 +734,50 @@ public class MainActivity extends AppCompatActivity implements TrojanConnection.
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         // Bind menu items to their relative actions
-        switch (item.getItemId()) {
-            case R.id.action_test_connection:
-                testConnection();
+        int itemId = item.getItemId();
+        if (itemId == R.id.action_test_connection) {
+            testConnection();
+            return true;
+        } else if (itemId == R.id.action_show_develop_info_logcat) {// log of this process
+            LogHelper.showDevelopInfoInLogcat();
+            // log of other processes
+            showDevelopInfoInLogcat();
+            return true;
+        } else if (itemId == R.id.action_save_profile) {
+            if (!Globals.getTrojanConfigInstance().isValidRunningConfig()) {
+                Toast.makeText(MainActivity.this, R.string.invalid_configuration, Toast.LENGTH_SHORT).show();
                 return true;
-            case R.id.action_show_develop_info_logcat:
-                // log of this process
-                LogHelper.showDevelopInfoInLogcat();
-                // log of other processes
-                showDevelopInfoInLogcat();
-                return true;
-            case R.id.action_save_profile:
-                if (!Globals.getTrojanConfigInstance().isValidRunningConfig()) {
-                    Toast.makeText(MainActivity.this, R.string.invalid_configuration, Toast.LENGTH_SHORT).show();
-                    return true;
+            }
+            Threads.instance().runOnWorkThread(new Task() {
+                @Override
+                public void onRun() {
+                    TrojanConfig config = Globals.getTrojanConfigInstance();
+                    TrojanHelper.WriteTrojanConfig(config, Globals.getTrojanConfigPath());
+                    serverListDataManager.saveServerConfig(config);
+                    showSaveConfigResult(true);
                 }
-                Threads.instance().runOnWorkThread(new Task() {
-                    @Override
-                    public void onRun() {
-                        TrojanConfig config = Globals.getTrojanConfigInstance();
-                        TrojanHelper.WriteTrojanConfig(config, Globals.getTrojanConfigPath());
-                        serverListDataManager.saveServerConfig(config);
-                        showSaveConfigResult(true);
-                    }
-                });
-                return true;
-            case R.id.action_view_server_list:
-                gotoServerList();
-                return true;
-            case R.id.action_about:
-                clearEditTextFocus();
-                startActivity(AboutActivity.create(MainActivity.this));
-                return true;
-            case R.id.action_share_link:
-                trojanURLText.setText(shareLink);
-                linkDialog.show();
-                trojanURLText.selectAll();
-                return true;
-            case R.id.action_exempt_app:
-                exemptAppSettingsActivityResultLauncher.launch(ExemptAppActivity.create(this));
-                return true;
-            case R.id.action_settings:
-                startActivity(SettingsActivity.create(this));
-                return true;
-            default:
-                // Invoke the superclass to handle it.
-                return super.onOptionsItemSelected(item);
-        }
+            });
+            return true;
+        } else if (itemId == R.id.action_view_server_list) {
+            gotoServerList();
+            return true;
+        } else if (itemId == R.id.action_about) {
+            clearEditTextFocus();
+            startActivity(AboutActivity.create(MainActivity.this));
+            return true;
+        } else if (itemId == R.id.action_share_link) {
+            trojanURLText.setText(shareLink);
+            linkDialog.show();
+            trojanURLText.selectAll();
+            return true;
+        } else if (itemId == R.id.action_exempt_app) {
+            exemptAppSettingsActivityResultLauncher.launch(ExemptAppActivity.create(this));
+            return true;
+        } else if (itemId == R.id.action_settings) {
+            startActivity(SettingsActivity.create(this));
+            return true;
+        }// Invoke the superclass to handle it.
+        return super.onOptionsItemSelected(item);
     }
 
     private void gotoServerList() {
@@ -791,7 +796,8 @@ public class MainActivity extends AppCompatActivity implements TrojanConnection.
                 proxyHost = service.getProxyHost();
                 proxyPort = service.getProxyPort();
             } catch (RemoteException e) {
-                e.printStackTrace();
+                // e.printStackTrace();
+                Log.i(TAG, "gotoServerList: ", e);
             }
         }
 

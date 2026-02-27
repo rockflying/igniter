@@ -130,4 +130,5 @@
     <string name="export_server_list_success">Exported Config to %s</string>
     <string name="export_server_list_error">Export Config Error</string>
     <string name="settings_fixed_port_usage">Only works when allow traffic from LAN is enable.\nPort is range from 49152 to 65535. For random port, just keep it blank.</string>
+    <string name="versionName">1.0.0</string>
 </resources>

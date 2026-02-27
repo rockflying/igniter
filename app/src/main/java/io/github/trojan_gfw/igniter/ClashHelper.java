@@ -2,9 +2,6 @@ package io.github.trojan_gfw.igniter;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public class ClashHelper {
 

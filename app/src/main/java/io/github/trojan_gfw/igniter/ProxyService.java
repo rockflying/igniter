@@ -26,6 +26,7 @@ import android.os.RemoteException;
 import androidx.annotation.IntDef;
 import androidx.annotation.NonNull;
 import androidx.core.app.NotificationCompat;
+import androidx.core.content.ContextCompat;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -182,7 +183,7 @@ public class ProxyService extends VpnService implements TestConnection.OnResultL
         LogHelper.i(TAG, "onCreate");
         IntentFilter filter = new IntentFilter();
         filter.addAction(getString(R.string.stop_service));
-        registerReceiver(mStopBroadcastReceiver, filter);
+        registerReceiver(mStopBroadcastReceiver, filter, Context.RECEIVER_EXPORTED);
     }
 
     @Override

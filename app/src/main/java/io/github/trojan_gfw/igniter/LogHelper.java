@@ -78,7 +78,7 @@ public final class LogHelper {
     }
 
     public static void showDevelopInfoInLogcat() {
-        util.Util.logGoRoutineCount();
-        util.Util.logGoroutineStackTrace();
+//        util.Util.logGoRoutineCount();
+//        util.Util.logGoroutineStackTrace();
     }
 }
