@@ -4,12 +4,15 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 
-import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 import androidx.preference.PreferenceFragmentCompat;
 
+import io.github.trojan_gfw.igniter.common.app.BaseAppCompatActivity;
 import io.github.trojan_gfw.igniter.databinding.ActivityAboutBinding;
 
-public class AboutActivity extends AppCompatActivity {
+public class AboutActivity extends BaseAppCompatActivity {
     private ActivityAboutBinding binding;
 
     public static Intent create(Context context) {
@@ -21,6 +24,14 @@ public class AboutActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         binding = ActivityAboutBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
+
+        // 为内容区域添加状态栏内边距
+        ViewCompat.setOnApplyWindowInsetsListener(binding.settings, (v, insets) -> {
+            Insets statusBars = insets.getInsets(WindowInsetsCompat.Type.statusBars());
+            v.setPadding(v.getPaddingLeft(), statusBars.top, v.getPaddingRight(), v.getPaddingBottom());
+            return insets;
+        });
+
         getSupportFragmentManager()
                 .beginTransaction()
                 .replace(R.id.settings, new SettingsFragment())

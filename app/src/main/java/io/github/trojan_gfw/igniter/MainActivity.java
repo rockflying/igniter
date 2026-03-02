@@ -246,6 +246,19 @@ public class MainActivity extends AppCompatActivity implements TrojanConnection.
         binding = ActivityMainBinding.bind(findViewById(R.id.rootLayout));
         setSupportActionBar(binding.toolbar);
 
+        // 沉浸式状态栏：状态栏透明，Toolbar 延伸到状态栏下方
+        getWindow().setStatusBarColor(android.graphics.Color.TRANSPARENT);
+        androidx.core.view.WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
+        androidx.core.view.WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView())
+                .setAppearanceLightStatusBars(false);
+
+        // 给 Toolbar 添加状态栏高度的顶部内边距
+        androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener(binding.toolbar, (v, insets) -> {
+            androidx.core.graphics.Insets statusBars = insets.getInsets(androidx.core.view.WindowInsetsCompat.Type.statusBars());
+            v.setPadding(v.getPaddingLeft(), statusBars.top, v.getPaddingRight(), v.getPaddingBottom());
+            return insets;
+        });
+
         goToServerListActivityResultLauncher = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(),
                 new ActivityResultCallback<ActivityResult>() {
                     @Override

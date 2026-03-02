@@ -20,7 +20,8 @@
             android:id="@+id/settings_top_bar"
             style="@style/CommonToolBar"
             android:layout_width="match_parent"
-            android:layout_height="@dimen/top_bar_height"
+            android:layout_height="wrap_content"
+            android:minHeight="@dimen/top_bar_height"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />

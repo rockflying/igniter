@@ -76,6 +76,12 @@ public class ExemptAppFragment extends BaseFragment implements ExemptAppContract
         if (activity instanceof AppCompatActivity) {
             ((AppCompatActivity) activity).setSupportActionBar(binding.exemptAppTopBar);
         }
+        // 沉浸式状态栏：为 Toolbar 添加状态栏内边距
+        androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener(binding.exemptAppTopBar, (v, insets) -> {
+            androidx.core.graphics.Insets statusBars = insets.getInsets(androidx.core.view.WindowInsetsCompat.Type.statusBars());
+            v.setPadding(v.getPaddingLeft(), statusBars.top, v.getPaddingRight(), v.getPaddingBottom());
+            return insets;
+        });
         mAppInfoAdapter = new AppInfoAdapter();
         binding.exemptAppRv.setAdapter(mAppInfoAdapter);
         binding.exemptAppRv.addItemDecoration(new DividerItemDecoration(mContext, LinearLayoutManager.VERTICAL));

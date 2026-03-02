@@ -74,6 +74,12 @@ public class SettingsFragment extends BaseFragment
             ((AppCompatActivity) activity).setSupportActionBar(binding.settingsTopBar);
             setHasOptionsMenu(true);
         }
+        // 沉浸式状态栏：为 Toolbar 添加状态栏内边距
+        androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener(binding.settingsTopBar, (v, insets) -> {
+            androidx.core.graphics.Insets statusBars = insets.getInsets(androidx.core.view.WindowInsetsCompat.Type.statusBars());
+            v.setPadding(v.getPaddingLeft(), statusBars.top, v.getPaddingRight(), v.getPaddingBottom());
+            return insets;
+        });
     }
 
     private void initListeners() {
