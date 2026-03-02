@@ -102,7 +102,7 @@ public class TrojanConfig implements Parcelable {
                     .put("enable_ipv6", this.enableIpv6)
                     .toString();
         } catch (Exception e) {
-            e.printStackTrace();
+            LogHelper.e("TrojanConfig", "Failed to generate Trojan config JSON", e);
             return null;
         }
     }
@@ -121,7 +121,7 @@ public class TrojanConfig implements Parcelable {
                     .setSNI(json.getJSONObject("ssl").getString("sni"));
 
         } catch (Exception e) {
-            e.printStackTrace();
+            LogHelper.e("TrojanConfig", "Failed to parse Trojan config from JSON", e);
         }
     }
 

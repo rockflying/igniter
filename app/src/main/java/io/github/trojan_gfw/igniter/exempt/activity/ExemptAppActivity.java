@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.view.Window;
 
+import androidx.activity.OnBackPressedCallback;
 import androidx.fragment.app.FragmentManager;
 
 import io.github.trojan_gfw.igniter.Globals;
@@ -37,12 +38,15 @@ public class ExemptAppActivity extends BaseAppCompatActivity {
         fm.beginTransaction()
                 .replace(R.id.parent_fl, fragment, ExemptAppFragment.TAG)
                 .commitAllowingStateLoss();
-    }
 
-    @Override
-    public void onBackPressed() {
-        if (mPresenter == null || !mPresenter.handleBackPressed()) {
-            super.onBackPressed();
-        }
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                if (mPresenter == null || !mPresenter.handleBackPressed()) {
+                    setEnabled(false);
+                    getOnBackPressedDispatcher().onBackPressed();
+                }
+            }
+        });
     }
 }

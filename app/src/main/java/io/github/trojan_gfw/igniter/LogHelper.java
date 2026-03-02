@@ -2,6 +2,9 @@ package io.github.trojan_gfw.igniter;
 
 import android.util.Log;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
+
 public final class LogHelper {
 
     // Logcat is line-buffered
@@ -75,6 +78,33 @@ public final class LogHelper {
 
     public static void e(String tag, String msg) {
         UnderlyingLog(msg, _e, tag);
+    }
+
+    public static void e(String tag, String msg, Throwable t) {
+        UnderlyingLog(msg + "\n" + getStackTraceString(t), _e, tag);
+    }
+
+    public static void w(String tag, String msg, Throwable t) {
+        UnderlyingLog(msg + "\n" + getStackTraceString(t), _w, tag);
+    }
+
+    public static void i(String tag, String msg, Throwable t) {
+        UnderlyingLog(msg + "\n" + getStackTraceString(t), _i, tag);
+    }
+
+    public static void d(String tag, String msg, Throwable t) {
+        UnderlyingLog(msg + "\n" + getStackTraceString(t), _d, tag);
+    }
+
+    private static String getStackTraceString(Throwable t) {
+        if (t == null) {
+            return "";
+        }
+        StringWriter sw = new StringWriter();
+        PrintWriter pw = new PrintWriter(sw);
+        t.printStackTrace(pw);
+        pw.flush();
+        return sw.toString();
     }
 
     public static void showDevelopInfoInLogcat() {

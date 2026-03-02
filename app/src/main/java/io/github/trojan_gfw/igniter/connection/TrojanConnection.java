@@ -13,6 +13,7 @@ import android.os.RemoteException;
 import androidx.annotation.NonNull;
 import androidx.annotation.UiThread;
 
+import io.github.trojan_gfw.igniter.LogHelper;
 import io.github.trojan_gfw.igniter.ProxyService;
 import io.github.trojan_gfw.igniter.R;
 import io.github.trojan_gfw.igniter.proxy.aidl.ITrojanService;
@@ -116,7 +117,7 @@ public class TrojanConnection implements ServiceConnection, Binder.DeathRecipien
             try {
                 context.unbindService(this);
             } catch (IllegalArgumentException e) {
-                e.printStackTrace();
+                LogHelper.e("TrojanConnection", "Failed to unbind service", e);
             }
             mAlreadyConnected = false;
             if (mListenToDeath && mBinder != null) {
@@ -134,7 +135,7 @@ public class TrojanConnection implements ServiceConnection, Binder.DeathRecipien
             try {
                 service.unregisterCallback(mTrojanServiceCallback);
             } catch (RemoteException e) {
-                e.printStackTrace();
+                LogHelper.e("TrojanConnection", "Failed to unregister service callback", e);
             }
             mServiceCallbackRegistered = false;
         }
@@ -163,7 +164,7 @@ public class TrojanConnection implements ServiceConnection, Binder.DeathRecipien
             service.registerCallback(mTrojanServiceCallback);
             mServiceCallbackRegistered = true;
         } catch (RemoteException e) {
-            e.printStackTrace();
+            LogHelper.e("TrojanConnection", "Failed to register callback on service connect", e);
         }
         if (mCallback != null) {
             mCallback.onServiceConnected(service);

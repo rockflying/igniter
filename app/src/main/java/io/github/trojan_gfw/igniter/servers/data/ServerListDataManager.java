@@ -38,6 +38,7 @@ import java.util.Set;
 import javax.net.ssl.HttpsURLConnection;
 
 import io.github.trojan_gfw.igniter.Globals;
+import io.github.trojan_gfw.igniter.LogHelper;
 import io.github.trojan_gfw.igniter.TrojanConfig;
 import io.github.trojan_gfw.igniter.TrojanHelper;
 import io.github.trojan_gfw.igniter.TrojanURLHelper;
@@ -134,7 +135,7 @@ public class ServerListDataManager implements ServerListDataSource {
         try {
             url = new URL(urlStr);
         } catch (MalformedURLException e) {
-            e.printStackTrace();
+            LogHelper.e("ServerListDataManager", "Invalid subscription URL: " + urlStr, e);
             callback.onFailed();
             return;
         }
@@ -169,7 +170,7 @@ public class ServerListDataManager implements ServerListDataSource {
                 }
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            LogHelper.e("ServerListDataManager", "Failed to request subscription servers", e);
             callback.onFailed();
         } finally {
             if (connection != null) {
@@ -213,7 +214,7 @@ public class ServerListDataManager implements ServerListDataSource {
             }
             return sb.toString();
         } catch (IOException e) {
-            e.printStackTrace();
+            LogHelper.e("ServerListDataManager", "Failed to read stream to string", e);
         }
         return null;
     }
@@ -223,7 +224,7 @@ public class ServerListDataManager implements ServerListDataSource {
         try (InputStream is = context.getContentResolver().openInputStream(fileUri)) {
             return readStringFromStream(is);
         } catch (IOException e) {
-            e.printStackTrace();
+            LogHelper.e("ServerListDataManager", "Failed to read file content from URI", e);
             return null;
         }
     }
@@ -288,7 +289,7 @@ public class ServerListDataManager implements ServerListDataSource {
             }
             return list;
         } catch (JSONException e) {
-            e.printStackTrace();
+            LogHelper.e("ServerListDataManager", "Failed to parse Trojan configs from file content", e);
         }
         return Collections.emptyList();
     }
@@ -298,7 +299,7 @@ public class ServerListDataManager implements ServerListDataSource {
         try {
             return TrojanHelper.writeStringToFile(getExportContent(), exportPath);
         } catch (Exception e) {
-            e.printStackTrace();
+            LogHelper.e("ServerListDataManager", "Failed to export servers to: " + exportPath, e);
             return false;
         }
     }
@@ -321,14 +322,14 @@ public class ServerListDataManager implements ServerListDataSource {
                 // jsonObject.put("enable_clash", trojanConfig.getEnableClash());
                 array.put(index++, jsonObject);
             } catch (JSONException e) {
-                e.printStackTrace();
+                LogHelper.e("ServerListDataManager", "Failed to create JSON for config export", e);
             }
         }
         JSONObject jsonObject = new JSONObject();
         try {
             jsonObject.put(ConfigFileConstants.CONFIGS, array);
         } catch (JSONException e) {
-            e.printStackTrace();
+            LogHelper.e("ServerListDataManager", "Failed to create export JSON object", e);
         }
         return jsonObject.toString(2);
     }

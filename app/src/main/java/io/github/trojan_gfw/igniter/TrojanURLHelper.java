@@ -20,7 +20,7 @@ public class TrojanURLHelper {
                     null, null,
                     (serverRemark == null || serverRemark.length() <= 0) ? null : serverRemark);
         } catch (Exception e) {
-            e.printStackTrace();
+            LogHelper.e("TrojanURLHelper", "Failed to generate Trojan URL", e);
             return null;
         }
 
@@ -32,7 +32,7 @@ public class TrojanURLHelper {
         try {
             trojanUri = new URI(trojanURLStr);
         } catch (java.net.URISyntaxException e) {
-            e.printStackTrace();
+            LogHelper.e("TrojanURLHelper", "Failed to parse Trojan URL: " + trojanURLStr, e);
             return null;
         }
         String scheme = trojanUri.getScheme();

@@ -110,7 +110,7 @@ public class ScanQRCodeActivity extends BaseAppCompatActivity {
             FileDescriptor fileDescriptor = parcelFileDescriptor.getFileDescriptor();
             return BitmapFactory.decodeFileDescriptor(fileDescriptor, null, options);
         } catch (IOException e) {
-            e.printStackTrace();
+            LogHelper.e(TAG, "Failed to resolve bitmap from URI", e);
         }
 
         return null;

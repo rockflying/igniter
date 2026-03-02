@@ -109,7 +109,7 @@ public class PreferencesProvider extends ContentProvider {
                 mCachePreferences.put(key, jsonObject.opt(key));
             }
         } catch (IOException | JSONException e) {
-            e.printStackTrace();
+            LogHelper.e(TAG, "Failed to read preferences to cache", e);
         }
     }
 
@@ -175,7 +175,7 @@ public class PreferencesProvider extends ContentProvider {
                 jsonObject.put(key, mCachePreferences.get(key));
             }
         } catch (JSONException e) {
-            e.printStackTrace();
+            LogHelper.e(TAG, "Failed to create JSON object from cache", e);
         }
         File preferencesFile = new File(mPreferencesFilePath);
         try (FileOutputStream fos = new FileOutputStream(preferencesFile);
@@ -183,7 +183,7 @@ public class PreferencesProvider extends ContentProvider {
             osw.write(jsonObject.toString());
             osw.flush();
         } catch (IOException e) {
-            e.printStackTrace();
+            LogHelper.e(TAG, "Failed to write preferences to file", e);
         }
     }
 }

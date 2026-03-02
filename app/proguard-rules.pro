@@ -12,14 +12,48 @@
 #   public *;
 #}
 
-# Uncomment this to preserve the line number information for
-# debugging stack traces.
-#-keepattributes SourceFile,LineNumberTable
+# ============================================
+# Source file and line number preservation
+# Useful for debugging stack traces in crash reports
+# ============================================
+-keepattributes SourceFile,LineNumberTable
+-renamesourcefileattribute SourceFile
 
-# If you keep the line number information, uncomment this to
-# hide the original source file name.
-#-renamesourcefileattribute SourceFile
-
-# for GSON
+# ============================================
+# GSON serialization classes
+# ============================================
 -keep class io.github.trojan_gfw.igniter.TrojanURLParseResult { *; }
 -keep class io.github.trojan_gfw.igniter.TrojanConfig { *; }
+
+# ============================================
+# AIDL interfaces
+# Keep all AIDL-generated classes and interfaces
+# ============================================
+-keep class io.github.trojan_gfw.igniter.proxy.aidl.ITrojanService { *; }
+-keep class io.github.trojan_gfw.igniter.proxy.aidl.ITrojanService$* { *; }
+-keep class io.github.trojan_gfw.igniter.proxy.aidl.ITrojanServiceCallback { *; }
+-keep class io.github.trojan_gfw.igniter.proxy.aidl.ITrojanServiceCallback$* { *; }
+
+# ============================================
+# ViewModel classes
+# Keep ViewModel classes to ensure proper lifecycle management
+# ============================================
+-keep class * extends androidx.lifecycle.ViewModel { *; }
+-keep class io.github.trojan_gfw.igniter.main.MainViewModel { *; }
+-keep class io.github.trojan_gfw.igniter.main.MainUiState { *; }
+
+# ============================================
+# Native methods
+# Keep native method names for JNI
+# ============================================
+-keepclasseswithmembernames class * {
+    native <methods>;
+}
+
+# ============================================
+# Parcelable classes
+# Keep Parcelable CREATOR fields
+# ============================================
+-keepclassmembers class * implements android.os.Parcelable {
+    public static final ** CREATOR;
+}

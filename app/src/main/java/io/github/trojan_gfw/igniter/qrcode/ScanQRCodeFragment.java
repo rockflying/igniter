@@ -1,6 +1,5 @@
 package io.github.trojan_gfw.igniter.qrcode;
 
-import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
@@ -20,7 +19,6 @@ import androidx.camera.core.ImageAnalysis;
 import androidx.camera.core.ImageProxy;
 import androidx.camera.core.Preview;
 import androidx.camera.lifecycle.ProcessCameraProvider;
-import androidx.camera.view.PreviewView;
 import androidx.core.content.ContextCompat;
 
 import com.google.common.util.concurrent.ListenableFuture;
@@ -38,12 +36,14 @@ import java.util.concurrent.Executors;
 import io.github.trojan_gfw.igniter.LogHelper;
 import io.github.trojan_gfw.igniter.R;
 import io.github.trojan_gfw.igniter.common.app.BaseFragment;
+import io.github.trojan_gfw.igniter.databinding.FragmentScanQrCodeBinding;
 
 public class ScanQRCodeFragment extends BaseFragment implements ImageAnalysis.Analyzer {
     public static final String TAG = "ScanQRCodeFragment";
     private static final int DEFAULT_IMAGE_ANALYSIS_WIDTH = 1080;
     private static final int DEFAULT_IMAGE_ANALYSIS_HEIGHT = 1920;
     private static final String KEY_SCAN_CONTENT = ScanQRCodeActivity.KEY_SCAN_CONTENT;
+    private FragmentScanQrCodeBinding binding;
     private BarcodeScanner mScanner;
     private Executor mMainExecutor;
     private ExecutorService mCameraExecutor;
@@ -56,7 +56,8 @@ public class ScanQRCodeFragment extends BaseFragment implements ImageAnalysis.An
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.fragment_scan_qr_code, container, false);
+        binding = FragmentScanQrCodeBinding.inflate(inflater, container, false);
+        return binding.getRoot();
     }
 
     @Override
@@ -64,6 +65,12 @@ public class ScanQRCodeFragment extends BaseFragment implements ImageAnalysis.An
         super.onViewCreated(view, savedInstanceState);
         prepareForScanning();
         startCamera();
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        binding = null;
     }
 
     private void prepareForScanning() {
@@ -91,15 +98,14 @@ public class ScanQRCodeFragment extends BaseFragment implements ImageAnalysis.An
             try {
                 ProcessCameraProvider provider = future.get();
                 Preview preview = new Preview.Builder().build();
-                PreviewView previewView = findViewById(R.id.previewView);
-                preview.setSurfaceProvider(previewView.getSurfaceProvider());
+                preview.setSurfaceProvider(binding.previewView.getSurfaceProvider());
                 provider.unbindAll();
                 provider.bindToLifecycle(this, CameraSelector.DEFAULT_BACK_CAMERA,
                         getImageAnalysis(), preview);
             } catch (ExecutionException | InterruptedException e) {
                 LogHelper.e(TAG, "Bind camera failed: " + e.getMessage());
                 Toast.makeText(mContext.getApplicationContext(), R.string.scan_qr_code_camera_error, Toast.LENGTH_SHORT).show();
-                e.printStackTrace();
+                LogHelper.e(TAG, "Failed to bind camera", e);
                 finishActivity();
             }
         }, mMainExecutor);

@@ -30,7 +30,7 @@ public class TrojanHelper {
                 JSONObject jsonObject = new JSONObject(config.generateTrojanConfigJSON());
                 jsonArray.put(jsonObject);
             } catch (JSONException e) {
-                e.printStackTrace();
+                LogHelper.e("TrojanHelper", "Failed to create JSON object for server config", e);
                 return false;
             }
         }
@@ -46,7 +46,7 @@ public class TrojanHelper {
             fos.write(content.getBytes());
             fos.flush();
         } catch (IOException e) {
-            e.printStackTrace();
+            LogHelper.e("TrojanHelper", "Failed to write string to file: " + filepath, e);
             return false;
         }
         return true;
@@ -70,7 +70,7 @@ public class TrojanHelper {
             }
             return list;
         } catch (IOException | JSONException e) {
-            e.printStackTrace();
+            LogHelper.e("TrojanHelper", "Failed to read Trojan server config list", e);
         }
         return Collections.emptyList();
     }
@@ -85,7 +85,7 @@ public class TrojanHelper {
                 LogHelper.v(CONFIG_LIST_TAG, new String(content));
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            LogHelper.e("TrojanHelper", "Failed to show Trojan config list", e);
         }
     }
 
@@ -105,7 +105,7 @@ public class TrojanHelper {
             return json.toString();*/
             return config.generateTrojanConfigJSON();
         } catch (Exception e) {
-            e.printStackTrace();
+            LogHelper.e("TrojanHelper", "Failed to parse Trojan config to JSON", e);
         }
         return "";
     }
@@ -126,7 +126,7 @@ public class TrojanHelper {
             trojanConfig.fromJSON(sb.toString());
             return trojanConfig;
         } catch (IOException e) {
-            e.printStackTrace();
+            LogHelper.e("TrojanHelper", "Failed to read Trojan config from: " + trojanConfigPath, e);
         }
         return null;
     }
@@ -146,7 +146,7 @@ public class TrojanHelper {
                 fos.write(config.getBytes());
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            LogHelper.e("TrojanHelper", "Failed to write Trojan config to: " + trojanConfigPath, e);
         }
     }
 
@@ -168,7 +168,7 @@ public class TrojanHelper {
                     fos.write(json.toString().getBytes());
                 }
             } catch (Exception e) {
-                e.printStackTrace();
+                LogHelper.e("TrojanHelper", "Failed to change listen port in: " + trojanConfigPath, e);
             }
         }
     }
@@ -183,7 +183,7 @@ public class TrojanHelper {
                 LogHelper.v(SINGLE_CONFIG_TAG, new String(content));
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            LogHelper.e("TrojanHelper", "Failed to show config from: " + trojanConfigPath, e);
         }
     }
 

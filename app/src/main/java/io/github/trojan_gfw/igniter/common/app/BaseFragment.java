@@ -32,6 +32,12 @@ public abstract class BaseFragment extends Fragment {
         mRootView = view;
     }
 
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        mRootView = null;
+    }
+
     protected <T extends View> T findViewById(@IdRes int id) {
         return mRootView.findViewById(id);
     }

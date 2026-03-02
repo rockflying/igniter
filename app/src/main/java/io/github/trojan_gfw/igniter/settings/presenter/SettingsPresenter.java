@@ -7,6 +7,7 @@ import androidx.annotation.NonNull;
 import java.util.List;
 import java.util.regex.Pattern;
 
+import io.github.trojan_gfw.igniter.LogHelper;
 import io.github.trojan_gfw.igniter.common.os.Task;
 import io.github.trojan_gfw.igniter.common.os.Threads;
 import io.github.trojan_gfw.igniter.settings.contract.SettingsContract;
@@ -75,7 +76,7 @@ public class SettingsPresenter implements SettingsContract.Presenter {
                 return true;
             }
         } catch (NumberFormatException e) {
-            e.printStackTrace();
+            LogHelper.e("SettingsPresenter", "Failed to parse port number: " + portStr, e);
         }
         return false;
     }

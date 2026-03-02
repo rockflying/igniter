@@ -8,17 +8,13 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageView;
 import android.widget.LinearLayout;
 
 import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.Toolbar;
 import androidx.fragment.app.FragmentActivity;
-
-import com.google.android.material.textfield.TextInputEditText;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -29,6 +25,7 @@ import io.github.trojan_gfw.igniter.R;
 import io.github.trojan_gfw.igniter.common.app.BaseFragment;
 import io.github.trojan_gfw.igniter.common.dialog.LoadingDialog;
 import io.github.trojan_gfw.igniter.common.utils.SnackbarUtils;
+import io.github.trojan_gfw.igniter.databinding.FragmentSettingsBinding;
 import io.github.trojan_gfw.igniter.settings.InputEntryView;
 import io.github.trojan_gfw.igniter.settings.contract.SettingsContract;
 
@@ -36,10 +33,8 @@ public class SettingsFragment extends BaseFragment
         implements SettingsContract.View, InputEntryView.Listener {
     public static final String TAG = "SettingsFragment";
     private SettingsContract.Presenter mPresenter;
-    private LinearLayout mDNSInputLl;
-    private ImageView mAddDNSIv;
+    private FragmentSettingsBinding binding;
     private LoadingDialog mLoadingDialog;
-    private TextInputEditText mPortTiet;
     private final List<InputEntryView> mExtraDNSInputList = new LinkedList<>();
 
     public SettingsFragment() {
@@ -54,33 +49,35 @@ public class SettingsFragment extends BaseFragment
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_settings, container, false);
+        binding = FragmentSettingsBinding.inflate(inflater, container, false);
+        return binding.getRoot();
     }
 
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        findViews();
+        initViews();
         initListeners();
         mPresenter.start();
     }
 
-    private void findViews() {
-        mDNSInputLl = findViewById(R.id.settings_dns_list_ll);
-        mAddDNSIv = findViewById(R.id.settings_add_dns_input_iv);
-        mPortTiet = findViewById(R.id.settings_port_tiet);
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        binding = null;
+    }
+
+    private void initViews() {
         FragmentActivity activity = getActivity();
         if (activity instanceof AppCompatActivity) {
-            Toolbar toolbar = findViewById(R.id.settings_top_bar);
-            toolbar.setTitle(R.string.settings_title);
-            ((AppCompatActivity) activity).setSupportActionBar(toolbar);
+            binding.settingsTopBar.setTitle(R.string.settings_title);
+            ((AppCompatActivity) activity).setSupportActionBar(binding.settingsTopBar);
             setHasOptionsMenu(true);
         }
     }
 
     private void initListeners() {
-        mAddDNSIv.setOnClickListener(v -> mPresenter.addDNSInput());
+        binding.settingsAddDnsInputIv.setOnClickListener(v -> mPresenter.addDNSInput());
         requireActivity().getOnBackPressedDispatcher().addCallback(getViewLifecycleOwner(),
                 new OnBackPressedCallback(true) {
                     @Override
@@ -97,9 +94,9 @@ public class SettingsFragment extends BaseFragment
 
     @Override
     public void removeDNSInput(int viewIndex) {
-        InputEntryView view = (InputEntryView) mDNSInputLl.getChildAt(viewIndex);
+        InputEntryView view = (InputEntryView) binding.settingsDnsListLl.getChildAt(viewIndex);
         view.setListener(null);
-        mDNSInputLl.removeView(view);
+        binding.settingsDnsListLl.removeView(view);
         mExtraDNSInputList.remove(view);
     }
 
@@ -111,7 +108,7 @@ public class SettingsFragment extends BaseFragment
         v.setListener(this);
         v.setText(text);
         v.setError(null);
-        mDNSInputLl.addView(v);
+        binding.settingsDnsListLl.addView(v);
         mExtraDNSInputList.add(v);
     }
 
@@ -136,7 +133,7 @@ public class SettingsFragment extends BaseFragment
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         final int id = item.getItemId();
         if (R.id.action_save_settings == id) {
-            mPresenter.saveSettings(getInputDNSList(), mPortTiet.getEditableText().toString());
+            mPresenter.saveSettings(getInputDNSList(), binding.settingsPortTiet.getEditableText().toString());
             return true;
         }
         return super.onOptionsItemSelected(item);
@@ -169,7 +166,7 @@ public class SettingsFragment extends BaseFragment
 
     @Override
     public void onDelete(InputEntryView view) {
-        mPresenter.removeDNSInput(mDNSInputLl.indexOfChild(view));
+        mPresenter.removeDNSInput(binding.settingsDnsListLl.indexOfChild(view));
     }
 
     @Override

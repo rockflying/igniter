@@ -18,11 +18,9 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.EditorInfo;
-import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.FrameLayout;
-import android.widget.Switch;
 import android.widget.Toast;
 
 import androidx.activity.result.ActivityResult;
@@ -34,9 +32,6 @@ import androidx.annotation.Nullable;
 import androidx.annotation.UiThread;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.SwitchCompat;
-
-import com.google.android.material.switchmaterial.SwitchMaterial;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -53,6 +48,7 @@ import io.github.trojan_gfw.igniter.common.utils.DisplayUtils;
 import io.github.trojan_gfw.igniter.common.utils.PreferenceUtils;
 import io.github.trojan_gfw.igniter.common.utils.SnackbarUtils;
 import io.github.trojan_gfw.igniter.connection.TrojanConnection;
+import io.github.trojan_gfw.igniter.databinding.ActivityMainBinding;
 import io.github.trojan_gfw.igniter.exempt.activity.ExemptAppActivity;
 import io.github.trojan_gfw.igniter.proxy.aidl.ITrojanService;
 import io.github.trojan_gfw.igniter.servers.activity.ServerListActivity;
@@ -68,18 +64,7 @@ public class MainActivity extends AppCompatActivity implements TrojanConnection.
     private static final String CONNECTION_TEST_URL = "https://www.google.com";
 
     private String shareLink;
-    private ViewGroup rootViewGroup;
-    private EditText remoteServerRemarkText;
-    private EditText remoteAddrText;
-    private EditText remoteServerSNIText;
-    private EditText remotePortText;
-    private EditText passwordText;
-    private Switch ipv6Switch;
-    private Switch verifySwitch;
-    private Switch clashSwitch;
-    private Switch allowLanSwitch;
-    private Button startStopButton, copyPortBtn;
-    private EditText trojanURLText;
+    private ActivityMainBinding binding;
     private @ProxyService.ProxyState int proxyState = ProxyService.STATE_NONE;
     private long currentProxyPort;
     private final TrojanConnection connection = new TrojanConnection(false);
@@ -87,6 +72,7 @@ public class MainActivity extends AppCompatActivity implements TrojanConnection.
     private volatile ITrojanService trojanService;
     private ServerListDataSource serverListDataManager;
     private AlertDialog linkDialog;
+    private EditText trojanURLText;
     private ActivityResultLauncher<Intent> goToServerListActivityResultLauncher;
     private ActivityResultLauncher<Intent> exemptAppSettingsActivityResultLauncher;
     private ActivityResultLauncher<Intent> startProxyActivityResultLauncher;
@@ -94,11 +80,10 @@ public class MainActivity extends AppCompatActivity implements TrojanConnection.
     private final TextViewListener remoteServerRemarkTextListener = new TextViewListener() {
         @Override
         protected void onTextChanged(String before, String old, String aNew, String after) {
-            // update TextView
-            startUpdates(); // to prevent infinite loop.
-            if (remoteServerRemarkText.hasFocus()) {
+            startUpdates();
+            if (binding.remoteServerRemarkText.hasFocus()) {
                 TrojanConfig ins = Globals.getTrojanConfigInstance();
-                ins.setRemoteServerRemark(remoteServerRemarkText.getText().toString());
+                ins.setRemoteServerRemark(binding.remoteServerRemarkText.getText().toString());
             }
             endUpdates();
         }
@@ -107,11 +92,10 @@ public class MainActivity extends AppCompatActivity implements TrojanConnection.
     private final TextViewListener remoteAddrTextListener = new TextViewListener() {
         @Override
         protected void onTextChanged(String before, String old, String aNew, String after) {
-            // update TextView
-            startUpdates(); // to prevent infinite loop.
-            if (remoteAddrText.hasFocus()) {
+            startUpdates();
+            if (binding.remoteAddrText.hasFocus()) {
                 TrojanConfig ins = Globals.getTrojanConfigInstance();
-                String remoteAddrRawStr = remoteAddrText.getText().toString();
+                String remoteAddrRawStr = binding.remoteAddrText.getText().toString();
                 ins.setRemoteAddr(remoteAddrRawStr.trim());
             }
             endUpdates();
@@ -121,11 +105,10 @@ public class MainActivity extends AppCompatActivity implements TrojanConnection.
     private final TextViewListener remoteServerSNITextListener = new TextViewListener() {
         @Override
         protected void onTextChanged(String before, String old, String aNew, String after) {
-            // update TextView
-            startUpdates(); // to prevent infinite loop.
-            if (remoteServerSNIText.hasFocus()) {
+            startUpdates();
+            if (binding.remoteServerSNIText.hasFocus()) {
                 TrojanConfig ins = Globals.getTrojanConfigInstance();
-                String remoteServerSNIRawStr = remoteServerSNIText.getText().toString();
+                String remoteServerSNIRawStr = binding.remoteServerSNIText.getText().toString();
                 ins.setSNI(remoteServerSNIRawStr.trim());
             }
             endUpdates();
@@ -135,31 +118,28 @@ public class MainActivity extends AppCompatActivity implements TrojanConnection.
     private final TextViewListener remotePortTextListener = new TextViewListener() {
         @Override
         protected void onTextChanged(String before, String old, String aNew, String after) {
-            // update TextView
-            startUpdates(); // to prevent infinite loop.
-            if (remotePortText.hasFocus()) {
+            startUpdates();
+            if (binding.remotePortText.hasFocus()) {
                 TrojanConfig ins = Globals.getTrojanConfigInstance();
-                String portStr = remotePortText.getText().toString();
+                String portStr = binding.remotePortText.getText().toString();
                 try {
                     int port = Integer.parseInt(portStr);
                     ins.setRemotePort(port);
                 } catch (NumberFormatException e) {
-                    // Ignore when we get invalid number
-//                    e.printStackTrace();
                     Log.i(TAG, "onTextChanged: ", e);
                 }
             }
             endUpdates();
         }
     };
+
     private final TextViewListener passwordTextListener = new TextViewListener() {
         @Override
         protected void onTextChanged(String before, String old, String aNew, String after) {
-            // update TextView
-            startUpdates(); // to prevent infinite loop.
-            if (passwordText.hasFocus()) {
+            startUpdates();
+            if (binding.passwordText.hasFocus()) {
                 TrojanConfig ins = Globals.getTrojanConfigInstance();
-                ins.setPassword(passwordText.getText().toString());
+                ins.setPassword(binding.passwordText.getText().toString());
             }
             endUpdates();
         }
@@ -178,7 +158,7 @@ public class MainActivity extends AppCompatActivity implements TrojanConnection.
                     }
                 }
             } catch (Exception e) {
-               // e.printStackTrace();
+                LogHelper.e(TAG, "Failed to copy raw resource to: " + destPathName, e);
             }
         }
     }
@@ -189,38 +169,38 @@ public class MainActivity extends AppCompatActivity implements TrojanConnection.
         switch (state) {
             case ProxyService.STARTING: {
                 inputEnabled = false;
-                startStopButton.setText(R.string.button_service__starting);
-                startStopButton.setEnabled(false);
+                binding.startStopButton.setText(R.string.button_service__starting);
+                binding.startStopButton.setEnabled(false);
                 break;
             }
             case ProxyService.STARTED: {
                 inputEnabled = false;
-                startStopButton.setText(R.string.button_service__stop);
-                startStopButton.setEnabled(true);
+                binding.startStopButton.setText(R.string.button_service__stop);
+                binding.startStopButton.setEnabled(true);
                 break;
             }
             case ProxyService.STOPPING: {
                 inputEnabled = false;
-                startStopButton.setText(R.string.button_service__stopping);
-                startStopButton.setEnabled(false);
+                binding.startStopButton.setText(R.string.button_service__stopping);
+                binding.startStopButton.setEnabled(false);
                 break;
             }
             default: {
                 inputEnabled = true;
-                startStopButton.setText(R.string.button_service__start);
-                startStopButton.setEnabled(true);
+                binding.startStopButton.setText(R.string.button_service__start);
+                binding.startStopButton.setEnabled(true);
                 break;
             }
         }
-        remoteServerRemarkText.setEnabled(inputEnabled);
-        remoteAddrText.setEnabled(inputEnabled);
-        remoteServerSNIText.setEnabled(inputEnabled);
-        remotePortText.setEnabled(inputEnabled);
-        ipv6Switch.setEnabled(inputEnabled);
-        passwordText.setEnabled(inputEnabled);
-        verifySwitch.setEnabled(inputEnabled);
-        clashSwitch.setEnabled(inputEnabled);
-        allowLanSwitch.setEnabled(inputEnabled);
+        binding.remoteServerRemarkText.setEnabled(inputEnabled);
+        binding.remoteAddrText.setEnabled(inputEnabled);
+        binding.remoteServerSNIText.setEnabled(inputEnabled);
+        binding.remotePortText.setEnabled(inputEnabled);
+        binding.ipv6Switch.setEnabled(inputEnabled);
+        binding.passwordText.setEnabled(inputEnabled);
+        binding.verifySwitch.setEnabled(inputEnabled);
+        binding.clashSwitch.setEnabled(inputEnabled);
+        binding.allowLanSwitch.setEnabled(inputEnabled);
     }
 
     private void applyConfigInstance(TrojanConfig config) {
@@ -242,14 +222,14 @@ public class MainActivity extends AppCompatActivity implements TrojanConnection.
             ins.setVerifyCert(verifyCert);
             ins.setEnableIpv6(enableIpv6);
 
-            remoteServerRemarkText.setText(remoteServerRemark);
-            remoteServerSNIText.setText(remoteServerSNI);
-            passwordText.setText(password);
-            remotePortText.setText(String.valueOf(remotePort));
-            remoteAddrText.setText(remoteAddress);
-            remoteAddrText.setSelection(remoteAddrText.length());
-            verifySwitch.setChecked(verifyCert);
-            ipv6Switch.setChecked(enableIpv6);
+            binding.remoteServerRemarkText.setText(remoteServerRemark);
+            binding.remoteServerSNIText.setText(remoteServerSNI);
+            binding.passwordText.setText(password);
+            binding.remotePortText.setText(String.valueOf(remotePort));
+            binding.remoteAddrText.setText(remoteAddress);
+            binding.remoteAddrText.setSelection(binding.remoteAddrText.length());
+            binding.verifySwitch.setChecked(verifyCert);
+            binding.ipv6Switch.setChecked(enableIpv6);
         }
     }
 
@@ -262,6 +242,8 @@ public class MainActivity extends AppCompatActivity implements TrojanConnection.
         } else {
             setContentView(R.layout.activity_main_720);
         }
+        // Bind views after setContentView
+        binding = ActivityMainBinding.bind(findViewById(R.id.rootScrollView));
 
         goToServerListActivityResultLauncher = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(),
                 new ActivityResultCallback<ActivityResult>() {
@@ -270,7 +252,7 @@ public class MainActivity extends AppCompatActivity implements TrojanConnection.
                         Intent data = result.getData();
                         if (result.getResultCode() == RESULT_OK && data != null) {
                             shareLink = "";
-                            final TrojanConfig selectedConfig = data.getParcelableExtra(ServerListActivity.KEY_TROJAN_CONFIG);
+                            final TrojanConfig selectedConfig = getParcelableExtraCompat(data, ServerListActivity.KEY_TROJAN_CONFIG, TrojanConfig.class);
                             if (selectedConfig != null) {
                                 LogHelper.e("gotoServer: ", selectedConfig.toString());
 
@@ -301,7 +283,7 @@ public class MainActivity extends AppCompatActivity implements TrojanConnection.
                     public void onActivityResult(ActivityResult result) {
                         if (result.getResultCode() == RESULT_OK) {
                             if (ProxyService.STARTED == proxyState) {
-                                SnackbarUtils.showTextLong(rootViewGroup, R.string.main_restart_proxy_service_tip);
+                                SnackbarUtils.showTextLong(binding.rootScrollView, R.string.main_restart_proxy_service_tip);
                             }
                         }
                     }
@@ -316,53 +298,33 @@ public class MainActivity extends AppCompatActivity implements TrojanConnection.
                     }
                 });
 
-        rootViewGroup = findViewById(R.id.rootScrollView);
-        remoteServerRemarkText = findViewById(R.id.remoteServerRemarkText);
-        remoteAddrText = findViewById(R.id.remoteAddrText);
-        remoteServerSNIText = findViewById(R.id.remoteServerSNIText);
-        remotePortText = findViewById(R.id.remotePortText);
-        passwordText = findViewById(R.id.passwordText);
-        ipv6Switch = findViewById(R.id.ipv6Switch);
-        verifySwitch = findViewById(R.id.verifySwitch);
-        clashSwitch = findViewById(R.id.clashSwitch);
-        allowLanSwitch = findViewById(R.id.allowLanSwitch);
-        startStopButton = findViewById(R.id.startStopButton);
-        copyPortBtn = findViewById(R.id.copyPortBtn);
-
         copyRawResourceToDir(R.raw.cacert, Globals.getCaCertPath(), true);
         copyRawResourceToDir(R.raw.country, Globals.getCountryMmdbPath(), true);
         copyRawResourceToDir(R.raw.clash_config, Globals.getClashConfigPath(), false);
 
-        remoteServerRemarkText.addTextChangedListener(remoteServerRemarkTextListener);
+        binding.remoteServerRemarkText.addTextChangedListener(remoteServerRemarkTextListener);
+        binding.remoteAddrText.addTextChangedListener(remoteAddrTextListener);
+        binding.remoteServerSNIText.addTextChangedListener(remoteServerSNITextListener);
+        binding.remotePortText.addTextChangedListener(remotePortTextListener);
 
-        remoteAddrText.addTextChangedListener(remoteAddrTextListener);
-
-        remoteServerSNIText.addTextChangedListener(remoteServerSNITextListener);
-
-        remotePortText.addTextChangedListener(remotePortTextListener);
-
-        passwordText.setOnFocusChangeListener(new View.OnFocusChangeListener() {
+        binding.passwordText.setOnFocusChangeListener(new View.OnFocusChangeListener() {
             @Override
             public void onFocusChange(View v, boolean hasFocus) {
                 if (!hasFocus) {
-                    passwordText.setInputType(EditorInfo.TYPE_CLASS_TEXT | EditorInfo.TYPE_TEXT_VARIATION_PASSWORD);
+                    binding.passwordText.setInputType(EditorInfo.TYPE_CLASS_TEXT | EditorInfo.TYPE_TEXT_VARIATION_PASSWORD);
                 } else {
-                    // place cursor on the end
-                    passwordText.setInputType(EditorInfo.TYPE_CLASS_TEXT);
-                    passwordText.setSelection(passwordText.getText().length());
+                    binding.passwordText.setInputType(EditorInfo.TYPE_CLASS_TEXT);
+                    binding.passwordText.setSelection(binding.passwordText.getText().length());
                 }
             }
         });
 
         boolean enableClash = PreferenceUtils.getBooleanPreference(getContentResolver(),
                 Uri.parse(Constants.PREFERENCE_URI), Constants.PREFERENCE_KEY_ENABLE_CLASH, true);
-        clashSwitch.setChecked(enableClash);
-        clashSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+        binding.clashSwitch.setChecked(enableClash);
+        binding.clashSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                // Generally speaking, it's better to insert content into ContentProvider in background
-                // thread, but that may cause data inconsistency when user starts proxy right after
-                // switching.
                 PreferenceUtils.putBooleanPreference(getContentResolver(),
                         Uri.parse(Constants.PREFERENCE_URI), Constants.PREFERENCE_KEY_ENABLE_CLASH,
                         isChecked);
@@ -371,22 +333,19 @@ public class MainActivity extends AppCompatActivity implements TrojanConnection.
 
         boolean allowLan = PreferenceUtils.getBooleanPreference(getContentResolver(),
                 Uri.parse(Constants.PREFERENCE_URI), Constants.PREFERENCE_KEY_ALLOW_LAN, false);
-        allowLanSwitch.setChecked(allowLan);
-        allowLanSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+        binding.allowLanSwitch.setChecked(allowLan);
+        binding.allowLanSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                // Generally speaking, it's better to insert content into ContentProvider in background
-                // thread, but that may cause data inconsistency when user starts proxy right after
-                // switching.
                 PreferenceUtils.putBooleanPreference(getContentResolver(),
                         Uri.parse(Constants.PREFERENCE_URI), Constants.PREFERENCE_KEY_ALLOW_LAN,
                         isChecked);
             }
         });
 
-        passwordText.addTextChangedListener(passwordTextListener);
+        binding.passwordText.addTextChangedListener(passwordTextListener);
 
-        ipv6Switch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+        binding.ipv6Switch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 TrojanConfig ins = Globals.getTrojanConfigInstance();
@@ -394,7 +353,7 @@ public class MainActivity extends AppCompatActivity implements TrojanConnection.
             }
         });
 
-        verifySwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+        binding.verifySwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 TrojanConfig ins = Globals.getTrojanConfigInstance();
@@ -450,12 +409,12 @@ public class MainActivity extends AppCompatActivity implements TrojanConnection.
             }
         };
 
-        remoteAddrText.addTextChangedListener(trojanConfigChangedTextViewListener);
-        remoteServerSNIText.addTextChangedListener(trojanConfigChangedTextViewListener);
-        remotePortText.addTextChangedListener(trojanConfigChangedTextViewListener);
-        passwordText.addTextChangedListener(trojanConfigChangedTextViewListener);
+        binding.remoteAddrText.addTextChangedListener(trojanConfigChangedTextViewListener);
+        binding.remoteServerSNIText.addTextChangedListener(trojanConfigChangedTextViewListener);
+        binding.remotePortText.addTextChangedListener(trojanConfigChangedTextViewListener);
+        binding.passwordText.addTextChangedListener(trojanConfigChangedTextViewListener);
 
-        startStopButton.setOnClickListener(new View.OnClickListener() {
+        binding.startStopButton.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 if (!Globals.getTrojanConfigInstance().isValidRunningConfig()) {
                     Toast.makeText(MainActivity.this,
@@ -469,7 +428,6 @@ public class MainActivity extends AppCompatActivity implements TrojanConnection.
                             Globals.getTrojanConfigPath()
                     );
                     TrojanHelper.ShowConfig(Globals.getTrojanConfigPath());
-                    // start ProxyService
                     Intent i = VpnService.prepare(getApplicationContext());
                     if (i != null) {
                         startProxyActivityResultLauncher.launch(i);
@@ -477,7 +435,6 @@ public class MainActivity extends AppCompatActivity implements TrojanConnection.
                         ProxyHelper.startProxyService(getApplicationContext());
                     }
                 } else if (proxyState == ProxyService.STARTED) {
-                    // stop ProxyService
                     ProxyHelper.stopProxyService(getApplicationContext());
                 }
             }
@@ -492,7 +449,6 @@ public class MainActivity extends AppCompatActivity implements TrojanConnection.
                         Constants.PREFERENCE_KEY_FIRST_START, false);
             }
         });
-        View horseIv = findViewById(R.id.imageView);
         GestureDetector gestureDetector = new GestureDetector(this, new GestureDetector.SimpleOnGestureListener() {
             @Override
             public boolean onDown(MotionEvent e) {
@@ -505,21 +461,20 @@ public class MainActivity extends AppCompatActivity implements TrojanConnection.
                 return true;
             }
         });
-        horseIv.setOnTouchListener((v, event) -> gestureDetector.onTouchEvent(event));
-        copyPortBtn.setOnClickListener(v-> {
+        binding.imageView.setOnTouchListener((v, event) -> gestureDetector.onTouchEvent(event));
+        binding.copyPortBtn.setOnClickListener(v -> {
             ClipboardManager cm = (ClipboardManager) getSystemService(CLIPBOARD_SERVICE);
             String portStr = String.valueOf(currentProxyPort);
             ClipData data = ClipData.newPlainText("port", portStr);
             cm.setPrimaryClip(data);
-            SnackbarUtils.showTextShort(rootViewGroup,
+            SnackbarUtils.showTextShort(binding.rootScrollView,
                     getString(R.string.main_proxy_port_copied_to_clipboard, portStr));
         });
     }
 
     private void swayTheHorse() {
-        View v = findViewById(R.id.imageView);
-        v.clearAnimation();
-        AnimationUtils.sway(v, 60f, 500L, 4f);
+        binding.imageView.clearAnimation();
+        AnimationUtils.sway(binding.imageView, 60f, 500L, 4f);
     }
 
     @Override
@@ -537,18 +492,15 @@ public class MainActivity extends AppCompatActivity implements TrojanConnection.
                     return;
                 }
                 ClipData clipData = clipboardManager.getPrimaryClip();
-                // check clipboard
                 if (clipData == null || clipData.getItemCount() == 0) {
                     return;
                 }
                 final CharSequence clipboardText = clipData.getItemAt(0).coerceToText(MainActivity.this);
-                // check scheme
                 TrojanURLParseResult parseResult = TrojanURLHelper.ParseTrojanURL(clipboardText.toString());
                 if (parseResult == null) {
                     return;
                 }
 
-                // show once if trojan url
                 if (clipboardManager.hasPrimaryClip()) {
                     clipboardManager.setPrimaryClip(ClipData.newPlainText("", ""));
                 }
@@ -573,10 +525,10 @@ public class MainActivity extends AppCompatActivity implements TrojanConnection.
     private void updatePortInfo(long port) {
         currentProxyPort = port;
         if (port >= 0L && port <= 65535) {
-            copyPortBtn.setText(getString(R.string.notification_listen_port, String.valueOf(port)));
-            copyPortBtn.setVisibility(View.VISIBLE);
+            binding.copyPortBtn.setText(getString(R.string.notification_listen_port, String.valueOf(port)));
+            binding.copyPortBtn.setVisibility(View.VISIBLE);
         } else {
-            copyPortBtn.setVisibility(View.INVISIBLE);
+            binding.copyPortBtn.setVisibility(View.INVISIBLE);
         }
     }
 
@@ -601,7 +553,6 @@ public class MainActivity extends AppCompatActivity implements TrojanConnection.
                         }
                     });
                 } catch (RemoteException e) {
-                    // e.printStackTrace();
                     Log.e(TAG, "onServiceConnected: ", e);
                 }
             }
@@ -614,7 +565,7 @@ public class MainActivity extends AppCompatActivity implements TrojanConnection.
         synchronized (lock) {
             trojanService = null;
         }
-        runOnUiThread(()-> updatePortInfo(INVALID_PORT));
+        runOnUiThread(() -> updatePortInfo(INVALID_PORT));
     }
 
     @Override
@@ -626,7 +577,6 @@ public class MainActivity extends AppCompatActivity implements TrojanConnection.
             long port = msgJson.optLong(ProxyService.STATE_MSG_KEY_PORT, INVALID_PORT);
             updatePortInfo(port);
         } catch (JSONException e) {
-            // e.printStackTrace();
             Log.i(TAG, "onStateChanged: ", e);
         }
     }
@@ -658,16 +608,9 @@ public class MainActivity extends AppCompatActivity implements TrojanConnection.
     public void onBinderDied() {
         LogHelper.i(TAG, "onBinderDied");
         connection.disconnect(this);
-        // connect the new binder
-        // todo is it necessary to re-connect?
         connection.connect(this, this);
     }
 
-    /**
-     * Test connection by invoking {@link ITrojanService#testConnection(String)}. Since {@link ITrojanService}
-     * is from remote process, a {@link RemoteException} might be thrown. Test result will be delivered
-     * to {@link #onTestResult(String, boolean, long, String)} by {@link TrojanConnection}.
-     */
     private void testConnection() {
         ITrojanService service;
         synchronized (lock) {
@@ -680,16 +623,11 @@ public class MainActivity extends AppCompatActivity implements TrojanConnection.
                 service.testConnection(CONNECTION_TEST_URL);
             } catch (RemoteException e) {
                 showTestConnectionResult(CONNECTION_TEST_URL, false, 0L, getString(R.string.trojan_service_error));
-                // e.printStackTrace();
                 Log.i(TAG, "testConnection: ", e);
             }
         }
     }
 
-    /**
-     * Show develop info in Logcat by invoking {@link ITrojanService#showDevelopInfoInLogcat}. Since {@link ITrojanService}
-     * is from remote process, a {@link RemoteException} might be thrown.
-     */
     private void showDevelopInfoInLogcat() {
         ITrojanService service;
         synchronized (lock) {
@@ -699,18 +637,17 @@ public class MainActivity extends AppCompatActivity implements TrojanConnection.
             try {
                 service.showDevelopInfoInLogcat();
             } catch (RemoteException e) {
-                // e.printStackTrace();
                 Log.i(TAG, "showDevelopInfoInLogcat: ", e);
             }
         }
     }
 
     private void clearEditTextFocus() {
-        remoteServerRemarkText.clearFocus();
-        remoteAddrText.clearFocus();
-        remoteServerSNIText.clearFocus();
-        remotePortText.clearFocus();
-        passwordText.clearFocus();
+        binding.remoteServerRemarkText.clearFocus();
+        binding.remoteAddrText.clearFocus();
+        binding.remoteServerSNIText.clearFocus();
+        binding.remotePortText.clearFocus();
+        binding.passwordText.clearFocus();
     }
 
     private void showSaveConfigResult(final boolean success) {
@@ -726,21 +663,18 @@ public class MainActivity extends AppCompatActivity implements TrojanConnection.
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu_main, menu);
         return true;
     }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        // Bind menu items to their relative actions
         int itemId = item.getItemId();
         if (itemId == R.id.action_test_connection) {
             testConnection();
             return true;
-        } else if (itemId == R.id.action_show_develop_info_logcat) {// log of this process
+        } else if (itemId == R.id.action_show_develop_info_logcat) {
             LogHelper.showDevelopInfoInLogcat();
-            // log of other processes
             showDevelopInfoInLogcat();
             return true;
         } else if (itemId == R.id.action_save_profile) {
@@ -776,7 +710,7 @@ public class MainActivity extends AppCompatActivity implements TrojanConnection.
         } else if (itemId == R.id.action_settings) {
             startActivity(SettingsActivity.create(this));
             return true;
-        }// Invoke the superclass to handle it.
+        }
         return super.onOptionsItemSelected(item);
     }
 
@@ -796,13 +730,21 @@ public class MainActivity extends AppCompatActivity implements TrojanConnection.
                 proxyHost = service.getProxyHost();
                 proxyPort = service.getProxyPort();
             } catch (RemoteException e) {
-                // e.printStackTrace();
                 Log.i(TAG, "gotoServerList: ", e);
             }
         }
 
         goToServerListActivityResultLauncher.launch(ServerListActivity.create(MainActivity.this,
                 proxyOn, proxyHost, proxyPort));
+    }
+
+    @SuppressWarnings("deprecation")
+    private static <T extends android.os.Parcelable> T getParcelableExtraCompat(Intent intent, String name, Class<T> clazz) {
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+            return intent.getParcelableExtra(name, clazz);
+        } else {
+            return intent.getParcelableExtra(name);
+        }
     }
 
     @Override
@@ -818,5 +760,6 @@ public class MainActivity extends AppCompatActivity implements TrojanConnection.
     protected void onDestroy() {
         super.onDestroy();
         connection.disconnect(this);
+        binding = null;
     }
 }

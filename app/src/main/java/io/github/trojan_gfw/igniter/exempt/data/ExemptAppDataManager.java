@@ -22,6 +22,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import io.github.trojan_gfw.igniter.LogHelper;
+
 /**
  * Implementation of {@link ExemptAppDataSource}. This class reads and writes exempted app list in a
  * file. The exempted app package names will be written line by line in the file.
@@ -78,7 +80,7 @@ public class ExemptAppDataManager implements ExemptAppDataSource {
             }
             bw.flush();
         } catch (IOException e) {
-            e.printStackTrace();
+            LogHelper.e("ExemptAppDataManager", "Failed to save app package name set to: " + filePath, e);
         }
     }
 
@@ -98,7 +100,7 @@ public class ExemptAppDataManager implements ExemptAppDataSource {
                 tmp = reader.readLine();
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            LogHelper.e("ExemptAppDataManager", "Failed to read exempt app list from: " + filePath, e);
         }
         return exemptAppSet;
     }

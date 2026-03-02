@@ -20,7 +20,7 @@ public class ClashHelper {
                 LogHelper.v(TAG, sb.toString());
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            LogHelper.e(TAG, "Failed to show config from: " + clashConfigPath, e);
         }
     }
 }

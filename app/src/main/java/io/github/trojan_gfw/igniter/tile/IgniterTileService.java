@@ -62,7 +62,7 @@ public class IgniterTileService extends TileService implements TrojanConnection.
                 onClick();
             }
         } catch (RemoteException e) {
-            e.printStackTrace();
+            LogHelper.e(TAG, "Failed to get service state on connect", e);
         }
     }
 
@@ -154,7 +154,7 @@ public class IgniterTileService extends TileService implements TrojanConnection.
                         break;
                 }
             } catch (RemoteException e) {
-                e.printStackTrace();
+                LogHelper.e(TAG, "Failed to get service state on click", e);
             }
         }
     }

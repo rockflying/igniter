@@ -5,6 +5,8 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 
+import io.github.trojan_gfw.igniter.LogHelper;
+
 public class FileUtils {
 
     public static boolean copy(File src, File dest) {
@@ -16,7 +18,7 @@ public class FileUtils {
                 fos.write(buff, 0, readBytes);
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            LogHelper.e("FileUtils", "Failed to copy file", e);
         }
         return false;
     }

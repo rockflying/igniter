@@ -208,7 +208,7 @@ public class ProxyService extends VpnService implements TestConnection.OnResultL
             try {
                 jsonObject.put(STATE_MSG_KEY_PORT, tun2socksPort);
             } catch (JSONException e) {
-                e.printStackTrace();
+                LogHelper.e(TAG, "Failed to create state change JSON", e);
             }
             msg = jsonObject.toString();
         } else {
@@ -219,7 +219,7 @@ public class ProxyService extends VpnService implements TestConnection.OnResultL
                 // the second String parameter is currently useless. Might be the url of the profile.
                 mCallbackList.getBroadcastItem(i).onStateChanged(state, msg);
             } catch (RemoteException e) {
-                e.printStackTrace();
+                LogHelper.e(TAG, "Failed to notify state change to callback", e);
             }
         }
         mCallbackList.finishBroadcast();
@@ -239,7 +239,7 @@ public class ProxyService extends VpnService implements TestConnection.OnResultL
             try {
                 mCallbackList.getBroadcastItem(i).onTestResult(testUrl, connected, delay, error);
             } catch (RemoteException e) {
-                e.printStackTrace();
+                LogHelper.e(TAG, "Failed to notify test result to callback", e);
             }
         }
         mCallbackList.finishBroadcast();
@@ -326,7 +326,7 @@ public class ProxyService extends VpnService implements TestConnection.OnResultL
             try {
                 applier.applyRule(builder, packageName);
             } catch (PackageManager.NameNotFoundException e) {
-                e.printStackTrace();
+                LogHelper.e(TAG, "Failed to apply rule for package: " + packageName, e);
                 setState(STOPPED);
             }
         }
@@ -444,7 +444,7 @@ public class ProxyService extends VpnService implements TestConnection.OnResultL
                     trojanPort = Freeport.getFreePort();
                 } while (trojanPort == fixedPort);
             } catch (Exception e) {
-                e.printStackTrace();
+                LogHelper.e(TAG, "Failed to get free port for Trojan", e);
                 trojanPort = 1081;
             }
             if (!allowLan || -1 == fixedPort) {
@@ -454,7 +454,7 @@ public class ProxyService extends VpnService implements TestConnection.OnResultL
                     }
                     while (clashSocksPort == trojanPort);
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    LogHelper.e(TAG, "Failed to get free port for Clash", e);
                 }
             } else {
                 clashSocksPort = fixedPort;
@@ -464,7 +464,7 @@ public class ProxyService extends VpnService implements TestConnection.OnResultL
                 try {
                     trojanPort = Freeport.getFreePort();
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    LogHelper.e(TAG, "Failed to get free port for Trojan (no Clash)", e);
                     trojanPort = 1081;
                 }
             } else {
@@ -495,7 +495,7 @@ public class ProxyService extends VpnService implements TestConnection.OnResultL
                 Clash.start(clashStartOptions);
                 LogHelper.i("Clash", "clash started");
             } catch (Exception e) {
-                e.printStackTrace();
+                LogHelper.e(TAG, "Failed to start Clash", e);
             }
             tun2socksPort = clashSocksPort;
         } else {
@@ -577,7 +577,7 @@ public class ProxyService extends VpnService implements TestConnection.OnResultL
         stopSelf();
 
         setState(STOPPED);
-        stopForeground(true);
+        stopForeground(STOP_FOREGROUND_REMOVE);
         destroyNotificationChannel(getString(R.string.notification_channel_id));
     }
 
@@ -626,7 +626,7 @@ public class ProxyService extends VpnService implements TestConnection.OnResultL
             }
             networkConnectivityMonitorStarted = true;
         } catch (SecurityException se) {
-            se.printStackTrace();
+            LogHelper.e(TAG, "Security exception when registering network callback", se);
         }
 
     }

@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import io.github.trojan_gfw.igniter.LogHelper;
 import io.github.trojan_gfw.igniter.common.constants.Constants;
 import io.github.trojan_gfw.igniter.common.utils.PreferenceUtils;
 
@@ -41,7 +42,7 @@ public class SettingsDataManager implements ISettingsDataManager {
             }
             return list;
         } catch (JSONException e) {
-            e.printStackTrace();
+            LogHelper.e("SettingsDataManager", "Failed to parse DNS list JSON", e);
         }
         return Collections.emptyList();
     }
