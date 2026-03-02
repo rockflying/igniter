@@ -243,7 +243,8 @@ public class MainActivity extends AppCompatActivity implements TrojanConnection.
             setContentView(R.layout.activity_main_720);
         }
         // Bind views after setContentView
-        binding = ActivityMainBinding.bind(findViewById(R.id.rootScrollView));
+        binding = ActivityMainBinding.bind(findViewById(R.id.rootLayout));
+        setSupportActionBar(binding.toolbar);
 
         goToServerListActivityResultLauncher = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(),
                 new ActivityResultCallback<ActivityResult>() {
