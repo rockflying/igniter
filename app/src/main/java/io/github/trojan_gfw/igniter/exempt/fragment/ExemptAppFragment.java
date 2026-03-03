@@ -84,6 +84,7 @@ public class ExemptAppFragment extends BaseFragment implements ExemptAppContract
         });
         mAppInfoAdapter = new AppInfoAdapter();
         binding.exemptAppRv.setAdapter(mAppInfoAdapter);
+        binding.exemptAppRv.setHasFixedSize(true);
         binding.exemptAppRv.addItemDecoration(new DividerItemDecoration(mContext, LinearLayoutManager.VERTICAL));
     }
 

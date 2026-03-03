@@ -141,6 +141,7 @@ public class ServerListFragment extends BaseFragment implements ServerListContra
             return insets;
         });
         binding.serverListRv.setLayoutManager(new LinearLayoutManager(mContext, LinearLayoutManager.VERTICAL, false));
+        binding.serverListRv.setHasFixedSize(true);
         binding.serverListRv.addItemDecoration(new DividerItemDecoration(mContext, DividerItemDecoration.VERTICAL));
         mServerListAdapter = new ServerListAdapter(getContext(), new ArrayList<>());
         mItemTouchHelper = new ItemTouchHelper(new ItemVerticalMoveCallback(mServerListAdapter));

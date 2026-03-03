@@ -77,7 +77,12 @@ android {
     }
     packaging {
         jniLibs {
+            // During installation, the installer decompresses the libraries, and the linker loads
+            // the decompressed libraries at runtime; in this case, the APK would be smaller, but
+            // installation time might be slightly longer.
+            // We optimize for size to make users happy
             useLegacyPackaging = true
+            keepDebugSymbols += ['*/armeabi-v7a/libgojni.so', '*/arm64-v8a/libgojni.so', '*/x86/libgojni.so', '*/x86_64/libgojni.so']
         }
     }
     externalNativeBuild {
@@ -88,16 +93,6 @@ android {
     compileOptions {
         // Flag to enable support for the new language APIs
         coreLibraryDesugaringEnabled true
-    }
-    packagingOptions {
-        jniLibs {
-            // During installation, the installer decompresses the libraries, and the linker loads
-            // the decompressed libraries at runtime; in this case, the APK would be smaller, but
-            // installation time might be slightly longer.
-            // We optimize for size to make users happy
-            useLegacyPackaging = true
-            keepDebugSymbols += ['*/armeabi-v7a/libgojni.so', '*/arm64-v8a/libgojni.so', '*/x86/libgojni.so', '*/x86_64/libgojni.so']
-        }
     }
     splits {
         abi {

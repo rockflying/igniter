@@ -6,7 +6,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.CompoundButton;
-import android.widget.Switch;
+import com.google.android.material.switchmaterial.SwitchMaterial;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -71,7 +71,7 @@ public class AppInfoAdapter extends RecyclerView.Adapter<AppInfoAdapter.ViewHold
 
     class ViewHolder extends RecyclerView.ViewHolder implements CompoundButton.OnCheckedChangeListener {
         private TextView mNameTv;
-        private Switch mExemptSwitch;
+        private SwitchMaterial mExemptSwitch;
         private AppInfo mCurrentInfo;
 
         ViewHolder(@NonNull View itemView) {
