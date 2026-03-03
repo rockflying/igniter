@@ -13,14 +13,17 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
+import androidx.recyclerview.widget.DiffUtil;
 import androidx.recyclerview.widget.RecyclerView;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 
 import io.github.trojan_gfw.igniter.R;
 import io.github.trojan_gfw.igniter.TrojanConfig;
@@ -65,12 +68,15 @@ public class ServerListAdapter extends RecyclerView.Adapter<ViewHolder> implemen
     }
 
     public void deleteServers(Collection<TrojanConfig> toDeleteConfigs) {
+        List<TrojanConfigWrapper> oldList = new ArrayList<>(mData);
         for (int i = mData.size() - 1; i >= 0; i--) {
             if (toDeleteConfigs.contains(mData.get(i))) {
                 mData.remove(i);
             }
         }
-        notifyDataSetChanged();
+        DiffUtil.DiffResult diffResult = DiffUtil.calculateDiff(
+                new ServerConfigDiffCallback(oldList, mData));
+        diffResult.dispatchUpdatesTo(this);
     }
 
     public void setBatchDeleteMode(boolean enable) {
@@ -79,11 +85,15 @@ public class ServerListAdapter extends RecyclerView.Adapter<ViewHolder> implemen
     }
 
     public void replaceData(List<TrojanConfig> data) {
+        List<TrojanConfigWrapper> oldList = new ArrayList<>(mData);
         mData.clear();
         for (TrojanConfig config : data) {
             mData.add(new TrojanConfigWrapper(config));
         }
-        sortConfigByDelayTime();
+        Collections.sort(mData, (o1, o2) -> Float.compare(o1.getPingDelayTime(), o2.getPingDelayTime()));
+        DiffUtil.DiffResult diffResult = DiffUtil.calculateDiff(
+                new ServerConfigDiffCallback(oldList, mData));
+        diffResult.dispatchUpdatesTo(this);
     }
 
     public void setPingServerDelayTime(TrojanConfig tagetConfig, float timeout) {
@@ -140,19 +150,56 @@ public class ServerListAdapter extends RecyclerView.Adapter<ViewHolder> implemen
     }
 
     private void sortConfigByDelayTime() {
-        Collections.sort(mData, new Comparator<TrojanConfigWrapper>() {
-            @Override
-            public int compare(TrojanConfigWrapper o1, TrojanConfigWrapper o2) {
-                return Float.compare(o1.getPingDelayTime(), o2.getPingDelayTime());
-            }
-        });
-        notifyItemRangeChanged(0, mData.size());
+        List<TrojanConfigWrapper> oldList = new ArrayList<>(mData);
+        Collections.sort(mData, (o1, o2) -> Float.compare(o1.getPingDelayTime(), o2.getPingDelayTime()));
+        DiffUtil.DiffResult diffResult = DiffUtil.calculateDiff(
+                new ServerConfigDiffCallback(oldList, mData));
+        diffResult.dispatchUpdatesTo(this);
     }
 
     public interface OnItemClickListener {
         void onItemSelected(TrojanConfig config, int pos);
 
         void onItemBatchSelected(TrojanConfig config, int pos, boolean checked);
+    }
+
+    private static class ServerConfigDiffCallback extends DiffUtil.Callback {
+        private final List<TrojanConfigWrapper> oldList;
+        private final List<TrojanConfigWrapper> newList;
+
+        ServerConfigDiffCallback(List<TrojanConfigWrapper> oldList, List<TrojanConfigWrapper> newList) {
+            this.oldList = oldList;
+            this.newList = newList;
+        }
+
+        @Override
+        public int getOldListSize() {
+            return oldList.size();
+        }
+
+        @Override
+        public int getNewListSize() {
+            return newList.size();
+        }
+
+        @Override
+        public boolean areItemsTheSame(int oldItemPosition, int newItemPosition) {
+            // 使用 remoteAddr + remotePort 作为唯一标识
+            TrojanConfigWrapper oldItem = oldList.get(oldItemPosition);
+            TrojanConfigWrapper newItem = newList.get(newItemPosition);
+            return Objects.equals(oldItem.getRemoteAddr(), newItem.getRemoteAddr())
+                    && oldItem.getRemotePort() == newItem.getRemotePort();
+        }
+
+        @Override
+        public boolean areContentsTheSame(int oldItemPosition, int newItemPosition) {
+            TrojanConfigWrapper oldItem = oldList.get(oldItemPosition);
+            TrojanConfigWrapper newItem = newList.get(newItemPosition);
+            // 比较显示内容是否相同
+            return Objects.equals(oldItem.getRemoteServerRemark(), newItem.getRemoteServerRemark())
+                    && oldItem.getPingDelayTime() == newItem.getPingDelayTime()
+                    && oldItem.isSelected() == newItem.isSelected();
+        }
     }
 }
 
@@ -193,7 +240,7 @@ class ViewHolder extends RecyclerView.ViewHolder {
             mPingDelayTimeView.setVisibility(View.VISIBLE);
             if (config.getPingDelayTime() > ServerListDataManager.SLOW_SPEED_NETWORK) {
                 BigDecimal b = BigDecimal.valueOf(config.getPingDelayTime() / 1000);
-                float pintTime = b.setScale(2, BigDecimal.ROUND_HALF_UP).floatValue();
+                float pintTime = b.setScale(2, RoundingMode.HALF_UP).floatValue();
                 mPingDelayTimeView.setText(pintTime + " s");
                 mPingDelayTimeView.setTextColor(Color.RED);
             } else {

@@ -10,6 +10,7 @@ import com.stealthcopter.networktools.ping.PingStats;
 
 import java.lang.ref.WeakReference;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -294,7 +295,7 @@ public class ServerListPresenter implements ServerListContract.Presenter {
                     return;
                 }
                 BigDecimal b = BigDecimal.valueOf(pingStats.getAverageTimeTaken());
-                float pingDelayTime = b.setScale(1, BigDecimal.ROUND_HALF_UP).floatValue();
+                float pingDelayTime = b.setScale(1, RoundingMode.HALF_UP).floatValue();
                 presenter.setPingDelayTime(config, pingDelayTime);
             }
         }

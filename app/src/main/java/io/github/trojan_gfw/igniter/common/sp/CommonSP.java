@@ -7,14 +7,15 @@ public class CommonSP {
     private static final String SP_NAME = "common_sp";
     private static final String KEY_SERVER_SUBSCRIBE_URL = "server_sub_url";
     private static final String KEY_EXTRA_DNS = "EXTRA_DNS";
-    private static Context sContext;
+    private static Context sApplicationContext;
 
     public static void init(Context context) {
-        sContext = context;
+        // 使用 ApplicationContext 避免内存泄漏
+        sApplicationContext = context.getApplicationContext();
     }
 
     private static SharedPreferences sp() {
-        return sContext.getSharedPreferences(SP_NAME, Context.MODE_PRIVATE);
+        return sApplicationContext.getSharedPreferences(SP_NAME, Context.MODE_PRIVATE);
     }
 
     private static SharedPreferences.Editor edit() {

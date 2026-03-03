@@ -11,10 +11,12 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.core.widget.TextViewCompat;
+import androidx.recyclerview.widget.DiffUtil;
 import androidx.recyclerview.widget.RecyclerView;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import io.github.trojan_gfw.igniter.R;
 import io.github.trojan_gfw.igniter.exempt.data.AppInfo;
@@ -50,10 +52,11 @@ public class AppInfoAdapter extends RecyclerView.Adapter<AppInfoAdapter.ViewHold
         notifyItemRemoved(position);
     }
 
-    public void refreshData(List<AppInfo> data) {
+    public void refreshData(List<AppInfo> newData) {
+        DiffUtil.DiffResult diffResult = DiffUtil.calculateDiff(new AppInfoDiffCallback(mData, newData));
         mData.clear();
-        mData.addAll(data);
-        notifyDataSetChanged();
+        mData.addAll(newData);
+        diffResult.dispatchUpdatesTo(this);
     }
 
     @Override
@@ -96,6 +99,42 @@ public class AppInfoAdapter extends RecyclerView.Adapter<AppInfoAdapter.ViewHold
             mExemptSwitch.setOnCheckedChangeListener(null);
             mExemptSwitch.setChecked(appInfo.isExempt());
             mExemptSwitch.setOnCheckedChangeListener(this);
+        }
+    }
+
+    private static class AppInfoDiffCallback extends DiffUtil.Callback {
+        private final List<AppInfo> oldList;
+        private final List<AppInfo> newList;
+
+        AppInfoDiffCallback(List<AppInfo> oldList, List<AppInfo> newList) {
+            this.oldList = oldList;
+            this.newList = newList;
+        }
+
+        @Override
+        public int getOldListSize() {
+            return oldList.size();
+        }
+
+        @Override
+        public int getNewListSize() {
+            return newList.size();
+        }
+
+        @Override
+        public boolean areItemsTheSame(int oldItemPosition, int newItemPosition) {
+            // 使用 packageName 作为唯一标识
+            return Objects.equals(oldList.get(oldItemPosition).getPackageName(),
+                    newList.get(newItemPosition).getPackageName());
+        }
+
+        @Override
+        public boolean areContentsTheSame(int oldItemPosition, int newItemPosition) {
+            AppInfo oldItem = oldList.get(oldItemPosition);
+            AppInfo newItem = newList.get(newItemPosition);
+            // 比较显示内容是否相同
+            return Objects.equals(oldItem.getAppName(), newItem.getAppName())
+                    && oldItem.isExempt() == newItem.isExempt();
         }
     }
 }
