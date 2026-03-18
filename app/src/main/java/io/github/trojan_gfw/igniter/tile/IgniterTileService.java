@@ -69,6 +69,7 @@ public class IgniterTileService extends TileService implements TrojanConnection.
     @Override
     public void onServiceDisconnected() {
         LogHelper.i(TAG, "onServiceDisconnected");
+        updateTile(ProxyService.STOPPED);
     }
 
     @Override
@@ -98,6 +99,7 @@ public class IgniterTileService extends TileService implements TrojanConnection.
                 tile.setState(Tile.STATE_INACTIVE);
                 break;
             case ProxyService.STOPPED:
+                tile.setState(Tile.STATE_INACTIVE);
                 break;
             case ProxyService.STARTED:
                 tile.setState(Tile.STATE_ACTIVE);

@@ -330,7 +330,7 @@ public class MainViewModel extends ViewModel implements TrojanConnection.Callbac
         }
         MainUiState currentState = uiState.getValue();
         if (currentState != null) {
-            uiState.postValue(currentState.withProxyState(currentState.getProxyState(), MainUiState.INVALID_PORT));
+            uiState.postValue(currentState.withProxyState(ProxyService.STOPPED, MainUiState.INVALID_PORT));
         }
     }
 

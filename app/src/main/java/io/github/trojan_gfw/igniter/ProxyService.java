@@ -191,9 +191,11 @@ public class ProxyService extends VpnService implements TestConnection.OnResultL
         super.onDestroy();
         LogHelper.i(TAG, "onDestroy");
         mCallbackList.kill();
-        setState(STOPPED);
-        unregisterReceiver(mStopBroadcastReceiver);
-        stopNetworkConnectivityMonitor();
+        try {
+            unregisterReceiver(mStopBroadcastReceiver);
+        } catch (Exception e) {
+            LogHelper.e(TAG, "error unregistering receiver: " + e);
+        }
         stop();
     }
 
@@ -346,12 +348,20 @@ public class ProxyService extends VpnService implements TestConnection.OnResultL
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        LogHelper.i(TAG, "onStartCommand");
+        LogHelper.i(TAG, "onStartCommand, current state: " + state);
         // In order to keep the service long-lived, starting the service by Context.startForegroundService()
         // might be the easiest way. According to the official indication, a service which is started
         // by Context.startForegroundService() must call Service.startForeground() within 5 seconds.
         // Otherwise the process will be shutdown and user will get an ANR notification.
         startForegroundNotification(getString(R.string.notification_channel_id));
+
+        // If the service is already running (e.g., start called before stop completes),
+        // clean up the old connection first.
+        if (state == STARTED || state == STARTING) {
+            LogHelper.i(TAG, "onStartCommand: already running, shutting down old connection first");
+            shutdownInternal();
+        }
+
         setState(STARTING);
 
         VpnService.Builder b = new VpnService.Builder();
@@ -555,27 +565,49 @@ public class ProxyService extends VpnService implements TestConnection.OnResultL
         return START_STICKY;
     }
 
-    private void shutdown() {
-        LogHelper.i(TAG, "shutdown");
-        setState(STOPPING);
-
+    /**
+     * Clean up resources (VPN, native code) without stopping the service or killing the process.
+     * Used when re-starting the proxy within the same service instance.
+     */
+    private void shutdownInternal() {
+        LogHelper.i(TAG, "shutdownInternal");
         stopNetworkConnectivityMonitor();
         try {
-            pfd.close();
+            if (pfd != null) {
+                pfd.close();
+                pfd = null;
+            }
         } catch (Exception e) {
             LogHelper.e(TAG, "error closing pfd: " + e);
         }
-
-        JNIHelper.stop();
-
-        if (enable_clash) {
-            Clash.stop();
-            LogHelper.i("Clash", "clash stopped");
+        try {
+            JNIHelper.stop();
+        } catch (Exception e) {
+            LogHelper.e(TAG, "error stopping JNI: " + e);
         }
-        Tun2socks.stop();
+        try {
+            if (enable_clash) {
+                Clash.stop();
+            }
+        } catch (Exception e) {
+            LogHelper.e(TAG, "error stopping Clash: " + e);
+        }
+        try {
+            Tun2socks.stop();
+        } catch (Exception e) {
+            LogHelper.e(TAG, "error stopping Tun2socks: " + e);
+        }
+    }
 
+    private void shutdown() {
+        LogHelper.i(TAG, "shutdown");
+        if (state == STOPPING || state == STOPPED) {
+            LogHelper.i(TAG, "shutdown: already stopping or stopped, skip");
+            return;
+        }
+        setState(STOPPING);
+        shutdownInternal();
         stopSelf();
-
         setState(STOPPED);
         stopForeground(STOP_FOREGROUND_REMOVE);
         destroyNotificationChannel(getString(R.string.notification_channel_id));
@@ -598,9 +630,14 @@ public class ProxyService extends VpnService implements TestConnection.OnResultL
     }
 
     public void stop() {
-        shutdown();
-        // this is essential for gomobile aar
-        android.os.Process.killProcess(android.os.Process.myPid());
+        try {
+            shutdown();
+        } catch (Exception e) {
+            LogHelper.e(TAG, "error in shutdown: " + e);
+        } finally {
+            // this is essential for gomobile aar
+            android.os.Process.killProcess(android.os.Process.myPid());
+        }
     }
 
     private void startNetworkConnectivityMonitor() {

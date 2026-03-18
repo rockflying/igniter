@@ -173,7 +173,9 @@ public class TrojanConnection implements ServiceConnection, Binder.DeathRecipien
 
     @Override
     public void onServiceDisconnected(ComponentName name) {
-        unregisterServiceCallback();
+        // The remote process is already dead at this point. Don't attempt IPC to unregister
+        // the callback — the remote RemoteCallbackList is already destroyed. Just reset the flag.
+        mServiceCallbackRegistered = false;
         if (mCallback != null) {
             mCallback.onServiceDisconnected();
         }

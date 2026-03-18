@@ -579,7 +579,10 @@ public class MainActivity extends AppCompatActivity implements TrojanConnection.
         synchronized (lock) {
             trojanService = null;
         }
-        runOnUiThread(() -> updatePortInfo(INVALID_PORT));
+        runOnUiThread(() -> {
+            updateViews(ProxyService.STOPPED);
+            updatePortInfo(INVALID_PORT);
+        });
     }
 
     @Override
